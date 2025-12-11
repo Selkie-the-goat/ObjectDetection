@@ -76,4 +76,4 @@ The system provides several controls for an inclusive user experience:
 
 * **Model Accuracy:** The description notes the model is **45% accurate**; detection quality is highly dependent on the model weights (`yolo11n.pt`) used.
 * **Speech Queue Management:** The TTS implementation uses a custom queue to manage announcements, which helps prevent voice overload, but complex rapid detections might still lead to slight delays.
-* **GPU Usage:** The `server.py` is configured to use `'cpu'` by default. Performance will be significantly better if a GPU is available and configured by changing the `device='cpu'` parameter in `detect_objects_yolo` to `'0'` or `'cuda:0'`.
+* **GPU Usage:** The `server.py` is configured to use `'cpu'` by default. Performance will be significantly better if a GPU is available and configured by changing the `device='cpu'` parameter in `detect_objects_yolo` to `'0'` or `'cuda:0'`."# ObjectDetection" 
