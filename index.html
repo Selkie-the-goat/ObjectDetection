@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible Object Detector</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1> Assistive Object Detector</h1>
+      <p>Multi-object AI detection for differently abled users</p>
+    </header>
+
+    <!-- Keyboard shortcuts info -->
+    <div id="shortcutsPanel" class="shortcuts-panel hidden">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <ul>
+        <li><kbd>Space</kbd> - Start/Stop Detection</li>
+        <li><kbd>V</kbd> - Toggle Voice</li>
+        <li><kbd>S</kbd> - Announce Summary</li>
+        <li><kbd>H</kbd> - Toggle High Contrast</li>
+        <li><kbd>K</kbd> - Show/Hide Shortcuts</li>
+        <li><kbd>+/-</kbd> - Adjust Confidence</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div id="status" class="status">
+        <div class="spinner"></div>
+        <p id="statusText">Initializing...</p>
+      </div>
+
+      <div id="app" class="hidden">
+        <div id="error" class="error hidden" role="alert" aria-live="assertive"></div>
+
+        <div class="controls">
+          <button id="startBtn" class="btn-primary" aria-label="Start detection (Space)">
+            ▶️ Start Detection
+          </button>
+          <button id="voiceBtn" class="btn-success" aria-label="Toggle voice (V)" aria-pressed="true">
+            🔊 Voice On
+          </button>
+          <button id="summaryBtn" class="btn-info" aria-label="Announce summary (S)">
+            📊 Summary
+          </button>
+          <button id="contrastBtn" class="btn-secondary" aria-label="Toggle high contrast (H)" aria-pressed="false">
+            🌓 Contrast
+          </button>
+          <button id="shortcutsBtn" class="btn-secondary" aria-label="Show keyboard shortcuts (K)">
+            ⌨️ Shortcuts
+          </button>
+          
+          <div class="setting">
+            <label for="confidenceSlider">Confidence:</label>
+            <input type="range" id="confidenceSlider" min="10" max="90" value="50" step="5" aria-label="Minimum confidence threshold">
+            <span class="setting-value" id="confidenceValue">50%</span>
+          </div>
+
+          <div class="setting">
+            <label for="speechRate">Speech Rate:</label>
+            <input type="range" id="speechRate" min="5" max="15" value="10" step="1" aria-label="Speech rate">
+            <span class="setting-value" id="speechRateValue">1.0x</span>
+          </div>
+        </div>
+
+        <div class="main-content">
+          <div class="video-section">
+            <div class="video-container">
+              <video id="video" autoplay playsinline aria-label="Live camera feed"></video>
+              <canvas id="canvas" aria-hidden="true"></canvas>
+              <div id="placeholder" class="placeholder">
+                <div>
+                  <p>Click "Start Detection" or press <kbd>Space</kbd></p>
+                  <small>Detects multiple objects with smart voice announcements</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live captions -->
+            <div id="liveCaptions" class="live-captions hidden" role="status" aria-live="polite">
+              <span class="caption-icon">💬</span>
+              <span id="captionText">Waiting for announcements...</span>
+            </div>
+          </div>
+
+          <div class="detections">
+            <h2>
+              Detected Objects
+              <span class="count-badge" id="count">0</span>
+            </h2>
+            <div id="detectionList" role="list"></div>
+            <p id="noDetections" class="no-detections">Start detection to see results</p>
+            
+            <div id="speechStatus" class="speech-status hidden" role="status">
+              <span class="pulse">🔊</span>
+              <span id="speechText">Speaking...</span>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats">
+              <h3>Session Stats</h3>
+              <div class="stat-item">
+                <span class="stat-label">Objects Seen:</span>
+                <span class="stat-value" id="totalObjectsSeen">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Unique Types:</span>
+                <span class="stat-value" id="uniqueTypes">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Announcements:</span>
+                <span class="stat-value" id="totalAnnouncements">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessibility notice -->
+        <div class="accessibility-notice">
+          <h3>♿ Assistive Technologies Enabled</h3>
+          <ul>
+            <li>✓ Smart voice announcements (only on new objects)</li>
+            <li>✓ Live captions display</li>
+            <li>✓ Full keyboard navigation</li>
+            <li>✓ High contrast mode</li>
+            <li>✓ Screen reader optimized</li>
+            <li>✓ Customizable speech rate</li>
+            <li>✓ ARIA live regions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load TensorFlow.js and COCO-SSD from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  
+  <!-- Load our custom script -->
+  <script src="script.js"></script>
+</body>
+</html>
