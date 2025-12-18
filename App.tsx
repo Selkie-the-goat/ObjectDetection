@@ -159,7 +159,7 @@ const App: React.FC = () => {
         
         {/* Header / Status Bar */}
         <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/80 to-transparent">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
                 <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
                     <span className="font-mono text-sm font-bold tracking-wider uppercase text-yellow-400">
@@ -174,7 +174,7 @@ const App: React.FC = () => {
                                 {formatTime(timeLeft)}
                             </span>
                         </div>
-                        <button onClick={stopLiveSession} className="bg-red-600/80 p-2 rounded-full backdrop-blur-md">
+                        <button onClick={stopLiveSession} className="bg-red-600/80 p-2 rounded-full backdrop-blur-md hover:bg-red-500 transition-colors">
                             <Power size={20} />
                         </button>
                     </div>
@@ -200,18 +200,18 @@ const App: React.FC = () => {
                     {transcriptions.length > 0 && (
                         <div 
                             ref={scrollRef}
-                            className="w-full max-h-48 overflow-y-auto flex flex-col gap-2 mask-gradient-top"
+                            className="w-full max-h-48 overflow-y-auto flex flex-col gap-2 mask-gradient-top items-center"
                         >
                             {transcriptions.map((t, i) => (
                                 <div 
                                     key={i} 
-                                    className={`p-3 rounded-xl max-w-[85%] backdrop-blur-md border ${
+                                    className={`p-3 rounded-xl max-w-[85%] md:max-w-xl backdrop-blur-md border ${
                                         t.isUser 
-                                        ? 'self-end bg-blue-600/40 border-blue-400/50 text-right' 
-                                        : 'self-start bg-slate-800/60 border-yellow-400/50 text-yellow-100'
+                                        ? 'self-end md:self-center bg-blue-600/40 border-blue-400/50 text-right md:text-center' 
+                                        : 'self-start md:self-center bg-slate-800/60 border-yellow-400/50 text-yellow-100 md:text-center'
                                     }`}
                                 >
-                                    <p className="text-lg font-medium leading-snug high-contrast-text">
+                                    <p className="text-lg font-medium leading-snug high-contrast-text shadow-black drop-shadow-md">
                                         {t.text}
                                     </p>
                                 </div>
@@ -221,15 +221,15 @@ const App: React.FC = () => {
                  </div>
             </div>
         ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-12 bg-slate-900">
-                <div className="text-center space-y-4">
-                    <div className="inline-block p-6 rounded-full bg-slate-800 border-4 border-yellow-500 mb-4 shadow-[0_0_30px_rgba(234,179,8,0.3)]">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 md:space-y-12 bg-slate-900 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 to-slate-900">
+                <div className="text-center space-y-4 animate-fade-in-up">
+                    <div className="inline-block p-6 rounded-full bg-slate-800 border-4 border-yellow-500 mb-4 shadow-[0_0_30px_rgba(234,179,8,0.3)] transform transition-transform hover:scale-105">
                         <Eye size={64} className="text-yellow-500" />
                     </div>
-                    <h1 className="text-5xl font-black text-white tracking-tighter">
+                    <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">
                         VISION<span className="text-yellow-500">GUIDE</span>
                     </h1>
-                    <p className="text-slate-400 text-xl max-w-md mx-auto">
+                    <p className="text-slate-400 text-lg md:text-2xl max-w-md md:max-w-2xl mx-auto">
                         Your AI-powered assistant for navigation and object detection.
                     </p>
                     {status === "Demo Session Timed Out" && (
@@ -239,24 +239,24 @@ const App: React.FC = () => {
                     )}
                 </div>
 
-                <div className="w-full max-w-sm grid grid-cols-1 gap-6">
+                <div className="w-full max-w-sm md:max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
                     <button 
                         onClick={startLiveSession}
-                        className="group relative flex items-center justify-center gap-4 bg-yellow-500 text-slate-950 p-6 rounded-2xl shadow-xl hover:bg-yellow-400 hover:scale-[1.02] transition-all duration-200"
+                        className="group relative flex items-center justify-center gap-4 bg-yellow-500 text-slate-950 p-6 md:p-8 rounded-2xl shadow-xl hover:bg-yellow-400 hover:scale-[1.02] transition-all duration-200"
                     >
                         <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                         <VideoIcon size={32} />
                         <span className="text-2xl font-black uppercase tracking-wide">
-                            {status === "Demo Session Timed Out" ? "Resume Session" : "Start Assistant"}
+                            {status === "Demo Session Timed Out" ? "Resume" : "Start"}
                         </span>
                     </button>
 
                     <button 
                         onClick={() => setMode(AppMode.NAVIGATION)}
-                        className="group flex items-center justify-center gap-4 bg-slate-800 text-white p-6 rounded-2xl border-2 border-slate-700 shadow-xl hover:border-yellow-500 hover:bg-slate-750 transition-all duration-200"
+                        className="group flex items-center justify-center gap-4 bg-slate-800 text-white p-6 md:p-8 rounded-2xl border-2 border-slate-700 shadow-xl hover:border-yellow-500 hover:bg-slate-750 transition-all duration-200"
                     >
                         <MapIcon size={32} className="text-slate-300 group-hover:text-yellow-500 transition-colors" />
-                        <span className="text-2xl font-bold uppercase tracking-wide">Plan Route</span>
+                        <span className="text-2xl font-bold uppercase tracking-wide">Map</span>
                     </button>
                 </div>
             </div>

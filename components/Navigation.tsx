@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { askForDirections, MapResult } from '../services/mapService';
-import { Navigation as NavIcon, MapPin, Loader2, ArrowRight, Accessibility, Crosshair, Info } from 'lucide-react';
+import { Navigation as NavIcon, MapPin, Loader2, ArrowRight, Accessibility, Crosshair, Info, X } from 'lucide-react';
 import L from 'leaflet';
 
 export const Navigation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -143,16 +143,17 @@ export const Navigation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-white relative">
-      {/* Top Half: Live Map */}
-      <div className="h-[45%] w-full relative border-b-4 border-yellow-500">
+    <div className="flex flex-col md:flex-row h-full bg-slate-900 text-white relative">
+      {/* Map Section: Top on mobile, Right on desktop */}
+      <div className="h-[45%] md:h-full w-full md:w-[60%] relative border-b-4 md:border-b-0 md:border-l-4 border-yellow-500 order-1 md:order-2">
         <div ref={mapContainerRef} className="w-full h-full bg-slate-800 z-0" />
         
         <button 
             onClick={onClose}
-            className="absolute top-4 right-4 z-[400] bg-slate-900/90 p-2 px-4 rounded-lg font-bold border border-slate-700 hover:bg-red-900/80 transition-colors shadow-lg"
+            className="absolute top-4 right-4 z-[400] bg-slate-900/90 p-2 px-3 rounded-lg font-bold border border-slate-700 hover:bg-red-900/80 transition-colors shadow-lg flex items-center gap-2"
         >
-            Close
+            <span className="hidden md:inline">Close</span>
+            <X size={20} />
         </button>
 
         <button 
@@ -163,22 +164,23 @@ export const Navigation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Bottom Half: Controls & Results */}
-      <div className="flex-1 flex flex-col p-4 overflow-hidden">
-        <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-2">
-                <NavIcon size={28} /> Route Planner
+      {/* Controls Section: Bottom on mobile, Left on desktop */}
+      <div className="flex-1 md:h-full md:w-[40%] flex flex-col p-4 md:p-6 overflow-hidden order-2 md:order-1 bg-slate-900 z-10">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-yellow-400 flex items-center gap-2">
+                <NavIcon size={28} className="md:w-8 md:h-8" /> 
+                <span>Planner</span>
             </h2>
             <button
                 onClick={() => setIsAccessible(!isAccessible)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold border transition-all ${
+                className={`flex items-center gap-2 px-3 py-1.5 md:py-2 md:px-4 rounded-full text-xs md:text-sm font-bold border transition-all ${
                     isAccessible 
                     ? 'bg-blue-600 border-blue-400 text-white' 
                     : 'bg-slate-800 border-slate-600 text-slate-400'
                 }`}
             >
-                <Accessibility size={18} />
-                {isAccessible ? 'Wheelchair Accessible' : 'General Access'}
+                <Accessibility size={16} />
+                {isAccessible ? 'Accessible' : 'General'}
             </button>
         </div>
 
@@ -187,27 +189,27 @@ export const Navigation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 type="text" 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={isAccessible ? "Find accessible entrance, ramps..." : "Search destination..."}
-                className="flex-1 bg-slate-800 border-2 border-slate-600 rounded-xl p-3 text-lg focus:border-yellow-400 focus:outline-none"
+                placeholder={isAccessible ? "Accessible entrance..." : "Search..."}
+                className="flex-1 bg-slate-800 border-2 border-slate-600 rounded-xl p-3 text-base md:text-lg focus:border-yellow-400 focus:outline-none transition-colors"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
             <button 
                 onClick={handleSearch}
                 disabled={loading}
-                className="bg-yellow-500 text-slate-900 p-3 rounded-xl font-bold hover:bg-yellow-400 disabled:opacity-50 min-w-[3.5rem] flex items-center justify-center"
+                className="bg-yellow-500 text-slate-900 p-3 rounded-xl font-bold hover:bg-yellow-400 disabled:opacity-50 min-w-[3.5rem] flex items-center justify-center transition-colors"
             >
                 {loading ? <Loader2 className="animate-spin" /> : <ArrowRight size={24} />}
             </button>
         </div>
 
         {/* Results List */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 md:pr-2 custom-scrollbar">
             {result ? (
                 <div className="animate-fade-in space-y-4">
                     {/* Gemini Summary */}
                     <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
                          {/* Filter out the MARKER lines from the display text for cleaner UI */}
-                        <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                        <p className="text-base md:text-lg leading-relaxed whitespace-pre-wrap text-slate-200">
                             {result.text.split('MARKER:')[0]}
                         </p>
                     </div>
@@ -215,7 +217,7 @@ export const Navigation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     {/* Interactive List that pans map */}
                     {result.places.length > 0 && (
                         <div className="space-y-2">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Destinations on Map</h3>
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Destinations</h3>
                             {result.places.map((place, idx) => (
                                 <button 
                                     key={idx} 
@@ -223,24 +225,25 @@ export const Navigation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                         mapRef.current?.flyTo([place.lat, place.lng], 17);
                                         placeMarkersRef.current[idx]?.openPopup();
                                     }}
-                                    className="w-full text-left flex items-center gap-4 bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-yellow-400 hover:bg-slate-750 transition-colors"
+                                    className="w-full text-left flex items-center gap-4 bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-yellow-400 hover:bg-slate-750 transition-colors group"
                                 >
-                                    <div className="bg-yellow-500/20 p-2.5 rounded-full text-yellow-500 shrink-0">
+                                    <div className="bg-yellow-500/20 p-2.5 rounded-full text-yellow-500 shrink-0 group-hover:bg-yellow-500/30 transition-colors">
                                         <MapPin size={20} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-bold truncate text-lg">{place.title}</div>
-                                        <div className="text-slate-400 text-sm truncate">{place.description}</div>
+                                        <div className="font-bold truncate text-base md:text-lg text-slate-100">{place.title}</div>
+                                        <div className="text-slate-400 text-sm truncate group-hover:text-slate-300">{place.description}</div>
                                     </div>
-                                    <Info size={18} className="text-slate-500" />
+                                    <Info size={18} className="text-slate-500 group-hover:text-yellow-500 transition-colors" />
                                 </button>
                             ))}
                         </div>
                     )}
                 </div>
             ) : (
-                <div className="text-center text-slate-500 mt-8">
-                    <p>Enter a destination above. Markers will appear on the live map.</p>
+                <div className="text-center text-slate-500 mt-8 flex flex-col items-center">
+                    <MapPin size={48} className="text-slate-700 mb-4 opacity-50" />
+                    <p className="max-w-xs mx-auto">Enter a destination to plan your safe and accessible route.</p>
                 </div>
             )}
         </div>
