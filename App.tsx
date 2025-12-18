@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { geminiLive } from './services/geminiLive';
 import { Navigation } from './components/Navigation';
-import { Eye, Mic, Map as MapIcon, Video as VideoIcon, Power, Clock } from 'lucide-react';
+import { Eye, Mic, Map as MapIcon, Video as VideoIcon, Power, Clock, SwitchCamera, Zap, ZapOff } from 'lucide-react';
 
 enum AppMode {
   IDLE,
@@ -18,6 +18,11 @@ const App: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   
+  // Camera State
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [isFlashOn, setIsFlashOn] = useState(false);
+  const [supportsFlash, setSupportsFlash] = useState(false);
+
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -55,22 +60,67 @@ const App: React.FC = () => {
       return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const startLiveSession = async () => {
-    setMode(AppMode.LIVE);
-    setStatus("Initializing Camera & AI...");
-    setTranscriptions([]);
-    setTimeLeft(DEMO_SESSION_LIMIT);
-    
+  const initCamera = async (targetFacingMode: 'user' | 'environment') => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+    }
+
     try {
-      // 1. Setup Camera
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } 
+        video: { 
+            facingMode: targetFacingMode, 
+            width: { ideal: 1920 }, 
+            height: { ideal: 1080 } 
+        } 
       });
+      
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
+
+      // Check Flash Support
+      const track = stream.getVideoTracks()[0];
+      const capabilities = (track.getCapabilities ? track.getCapabilities() : {}) as any;
+      setSupportsFlash(!!capabilities.torch);
+      setIsFlashOn(false);
+
+    } catch (err) {
+      console.error("Camera init error:", err);
+      setStatus("Camera Error. Check permissions.");
+      throw err;
+    }
+  };
+
+  const toggleCamera = async () => {
+    const newMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(newMode);
+    await initCamera(newMode);
+  };
+
+  const toggleFlash = async () => {
+    if (!streamRef.current) return;
+    const track = streamRef.current.getVideoTracks()[0];
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: !isFlashOn }] as any
+      });
+      setIsFlashOn(!isFlashOn);
+    } catch (err) {
+      console.error("Flash toggle error:", err);
+    }
+  };
+
+  const startLiveSession = async () => {
+    setMode(AppMode.LIVE);
+    setStatus("Initializing...");
+    setTranscriptions([]);
+    setTimeLeft(DEMO_SESSION_LIMIT);
+    
+    try {
+      // 1. Setup Camera
+      await initCamera(facingMode);
 
       // 2. Connect to Gemini Live
       await geminiLive.connect({
@@ -102,7 +152,7 @@ const App: React.FC = () => {
 
     } catch (err) {
       console.error(err);
-      setStatus("Failed to start. Check permissions.");
+      setStatus("Failed to start.");
       setMode(AppMode.IDLE);
     }
   };
@@ -120,7 +170,8 @@ const App: React.FC = () => {
     
     setIsConnected(false);
     setMode(AppMode.IDLE);
-    // Don't reset status immediately if it was set by error/timeout logic
+    setIsFlashOn(false);
+    
     if (status === "Monitoring Environment") {
         setStatus("Ready");
     }
@@ -137,6 +188,9 @@ const App: React.FC = () => {
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+    // Mirror the draw if user facing mode, so the AI sees what the user sees on screen (mirrored)
+    // Actually AI should see the raw image, but users expect self-view to be mirrored.
+    // Usually we send raw.
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Low quality JPEG for speed
@@ -150,19 +204,19 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-white relative">
+    <div className="flex flex-col h-full bg-slate-950 text-white relative w-full overflow-hidden">
       {/* Hidden processing elements */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden flex flex-col">
+      <div className="flex-1 relative overflow-hidden flex flex-col w-full h-full">
         
         {/* Header / Status Bar */}
-        <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/80 to-transparent">
-            <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+        <div className="absolute top-0 left-0 right-0 z-30 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+            <div className="flex items-center justify-between max-w-7xl mx-auto w-full pointer-events-auto">
                 <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                    <span className="font-mono text-sm font-bold tracking-wider uppercase text-yellow-400">
+                    <span className="font-mono text-sm font-bold tracking-wider uppercase text-yellow-400 drop-shadow-md">
                         {status}
                     </span>
                 </div>
@@ -174,7 +228,7 @@ const App: React.FC = () => {
                                 {formatTime(timeLeft)}
                             </span>
                         </div>
-                        <button onClick={stopLiveSession} className="bg-red-600/80 p-2 rounded-full backdrop-blur-md hover:bg-red-500 transition-colors">
+                        <button onClick={stopLiveSession} className="bg-red-600/80 p-2 rounded-full backdrop-blur-md hover:bg-red-500 transition-colors shadow-lg">
                             <Power size={20} />
                         </button>
                     </div>
@@ -184,19 +238,21 @@ const App: React.FC = () => {
 
         {/* Video Viewport or Idle Placeholder */}
         {mode === AppMode.LIVE ? (
-            <div className="flex-1 relative bg-black flex items-center justify-center">
-                 {/* Video is full cover */}
+            <div className="flex-1 relative bg-black overflow-hidden group w-full h-full">
+                 {/* Video is full cover with absolute positioning to ensure it fills the container */}
                  <video 
                     ref={videoRef} 
-                    className="w-full h-full object-cover opacity-80" 
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
                     autoPlay 
                     playsInline 
                     muted 
                  />
                  
                  {/* Overlay HUD */}
-                 <div className="absolute inset-0 pointer-events-none border-[12px] border-slate-900/30"></div>
-                 <div className="absolute bottom-32 left-0 right-0 p-6 flex flex-col items-center justify-end z-10 gap-2">
+                 <div className="absolute inset-0 pointer-events-none border-[12px] border-slate-900/30 z-10"></div>
+                 
+                 {/* Transcriptions */}
+                 <div className="absolute bottom-24 md:bottom-32 left-0 right-0 p-6 flex flex-col items-center justify-end z-20 gap-2">
                     {transcriptions.length > 0 && (
                         <div 
                             ref={scrollRef}
@@ -205,7 +261,7 @@ const App: React.FC = () => {
                             {transcriptions.map((t, i) => (
                                 <div 
                                     key={i} 
-                                    className={`p-3 rounded-xl max-w-[85%] md:max-w-xl backdrop-blur-md border ${
+                                    className={`p-3 rounded-xl max-w-[85%] md:max-w-xl backdrop-blur-md border animate-fade-in-up ${
                                         t.isUser 
                                         ? 'self-end md:self-center bg-blue-600/40 border-blue-400/50 text-right md:text-center' 
                                         : 'self-start md:self-center bg-slate-800/60 border-yellow-400/50 text-yellow-100 md:text-center'
@@ -219,9 +275,29 @@ const App: React.FC = () => {
                         </div>
                     )}
                  </div>
+
+                 {/* Camera Controls (Floating) */}
+                 <div className="absolute right-6 bottom-32 md:bottom-auto md:top-24 flex flex-col gap-4 z-30">
+                     <button 
+                        onClick={toggleCamera}
+                        className="p-3 rounded-full bg-slate-800/60 backdrop-blur-md border border-slate-600 text-white hover:bg-slate-700 hover:scale-105 transition-all shadow-lg"
+                        title="Flip Camera"
+                     >
+                         <SwitchCamera size={24} />
+                     </button>
+                     {supportsFlash && (
+                         <button 
+                            onClick={toggleFlash}
+                            className={`p-3 rounded-full backdrop-blur-md border transition-all shadow-lg ${isFlashOn ? 'bg-yellow-500/80 border-yellow-400 text-black' : 'bg-slate-800/60 border-slate-600 text-white hover:bg-slate-700'}`}
+                            title="Toggle Flash"
+                         >
+                             {isFlashOn ? <Zap size={24} fill="currentColor" /> : <ZapOff size={24} />}
+                         </button>
+                     )}
+                 </div>
             </div>
         ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 md:space-y-12 bg-slate-900 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 to-slate-900">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 md:space-y-12 bg-slate-900 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 to-slate-900 z-10">
                 <div className="text-center space-y-4 animate-fade-in-up">
                     <div className="inline-block p-6 rounded-full bg-slate-800 border-4 border-yellow-500 mb-4 shadow-[0_0_30px_rgba(234,179,8,0.3)] transform transition-transform hover:scale-105">
                         <Eye size={64} className="text-yellow-500" />
@@ -265,7 +341,7 @@ const App: React.FC = () => {
 
       {/* Bottom Controls (Only visible in LIVE mode for interaction) */}
       {mode === AppMode.LIVE && (
-          <div className="bg-slate-900 p-6 pb-8 border-t border-slate-800 flex items-center justify-center gap-8">
+          <div className="bg-slate-900 p-6 pb-8 border-t border-slate-800 flex items-center justify-center gap-8 z-20">
              <div className="flex items-center gap-2 text-slate-400">
                 <Mic size={24} className={isConnected ? "text-green-500 animate-pulse" : "text-slate-600"} />
                 <span className="font-semibold text-sm">Listening...</span>
