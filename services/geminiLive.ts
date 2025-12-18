@@ -1,5 +1,5 @@
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality } from '@google/genai';
-import { createPcmBlob, base64ToUint8Array, decodeAudioData, arrayBufferToBase64 } from '../utils/audioUtils';
+import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
+import { createPcmBlob, base64ToUint8Array, decodeAudioData } from '../utils/audioUtils';
 
 // Types
 export interface LiveConfig {
@@ -11,13 +11,13 @@ export interface LiveConfig {
 
 export class GeminiLiveService {
   private ai: GoogleGenAI;
-  private sessionPromise: Promise<LiveSession> | null = null;
+  // Use 'any' for the session type as LiveSession is not correctly exported or resolved in the build environment
+  private sessionPromise: Promise<any> | null = null;
   private inputAudioContext: AudioContext | null = null;
   private outputAudioContext: AudioContext | null = null;
   private inputSource: MediaStreamAudioSourceNode | null = null;
   private processor: ScriptProcessorNode | null = null;
   private currentStream: MediaStream | null = null;
-  private frameIntervalId: number | null = null;
   
   // Output Audio Queue
   private nextStartTime = 0;
@@ -171,15 +171,8 @@ export class GeminiLiveService {
       await this.outputAudioContext.close();
     }
     
-    // Clean up session (the SDK doesn't expose a direct close on the session object easily in all versions, 
-    // but stopping stream usually triggers backend close or we can let it timeout/close manually if supported)
-    // There is no explicit .close() on LiveSession in the types provided in prompt, 
-    // but the WebSocket usually closes when object is destroyed or effectively abandoned/garbage collected.
-    // However, the prompt mentions `session.close()` in "Live API Rules".
     this.sessionPromise?.then(session => {
-        // @ts-ignore - Assuming close exists based on prompt guidance
         if (typeof session.close === 'function') {
-            // @ts-ignore
             session.close();
         }
     });

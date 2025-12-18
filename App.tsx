@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { geminiLive } from './services/geminiLive';
 import { Navigation } from './components/Navigation';
-import { Eye, Mic, Map as MapIcon, Video as VideoIcon, AlertTriangle, Volume2, Power, Clock } from 'lucide-react';
+import { Eye, Mic, Map as MapIcon, Video as VideoIcon, Power, Clock } from 'lucide-react';
 
 enum AppMode {
   IDLE,
