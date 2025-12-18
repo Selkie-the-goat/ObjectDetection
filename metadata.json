@@ -1,0 +1,9 @@
+{
+  "name": "VisionGuide AI",
+  "description": "An empowering accessibility assistant using Gemini Live API for real-time object detection, hazard warnings, and navigation assistance for visually impaired users.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
